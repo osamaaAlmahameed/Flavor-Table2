@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edit Recipe - Flavor Table</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Edit Recipe</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="favorites.html">Favorites</a>
+      <a href="randomRecipes.html">Random Recipes</a>
+      <a href="editRecipe.html">Edit Recipe</a>
+    </nav>
+  </header>
+
+  <main>
+    <form id="editForm">
+      <div class="form-group">
+        <label for="title">Title<span style="color:red">*</span>:</label>
+        <input type="text" id="title" name="title" required />
+      </div>
+
+      <div class="form-group">
+        <label for="image">Image URL:</label>
+        <input type="text" id="image" name="image" />
+      </div>
+
+      <div class="form-group">
+        <label for="instructions">Instructions:</label>
+        <textarea id="instructions" name="instructions" rows="5"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="ingredients">Ingredients (comma-separated)<span style="color:red">*</span>:</label>
+        <input type="text" id="ingredients" name="ingredients" required />
+      </div>
+
+      <input type="hidden" id="recipeId" />
+
+      <button type="submit">Update Recipe</button>
+      <button type="button" id="cancelBtn">Cancel</button>
+    </form>
+
+    <p id="message" style="color:red; margin-top:1em;"></p>
+  </main>
+
+  <footer>
+    <p>© 2025 Flavor Table</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const recipeId = params.get('id');
+      const messageEl = document.getElementById('message');
+      const form = document.getElementById('editForm');
+      const cancelBtn = document.getElementById('cancelBtn');
+
+      if (!recipeId) {
+        messageEl.textContent = 'No recipe ID provided in URL.';
+        form.style.display = 'none';
+        return;
+      }
+
+      // Load recipe data to edit
+      axios.get(`/api/recipes/${recipeId}`)
+        .then(response => {
+          const recipe = response.data;
+          document.getElementById('recipeId').value = recipe.id;
+          document.getElementById('title').value = recipe.title;
+          document.getElementById('image').value = recipe.image || '';
+          document.getElementById('instructions').value = recipe.instructions || '';
+          document.getElementById('ingredients').value = recipe.ingredients.join(', ');
+        })
+        .catch(err => {
+          messageEl.textContent = 'Failed to load recipe data.';
+          console.error(err);
+          form.style.display = 'none';
+        });
+
+      // Handle form submission
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+
+        const id = document.getElementById('recipeId').value;
+        const title = document.getElementById('title').value.trim();
+        const image = document.getElementById('image').value.trim();
+        const instructions = document.getElementById('instructions').value.trim();
+        const ingredientsRaw = document.getElementById('ingredients').value.trim();
+
+        if (!title || !ingredientsRaw) {
+          messageEl.textContent = 'Title and ingredients are required.';
+          return;
+        }
+
+        const ingredients = ingredientsRaw.split(',').map(i => i.trim()).filter(Boolean);
+
+        axios.put(`/api/recipes/${id}`, {
+          title,
+          image: image || null,
+          instructions: instructions || null,
+          ingredients,
+        })
+          .then(() => {
+            messageEl.style.color = 'green';
+            messageEl.textContent = 'Recipe updated successfully!';
+            // Redirect back to favorites or home after 1.5 seconds
+            setTimeout(() => {
+              window.location.href = 'favorites.html';
+            }, 1500);
+          })
+          .catch(err => {
+            messageEl.style.color = 'red';
+            messageEl.textContent = 'Failed to update recipe.';
+            console.error(err);
+          });
+      });
+
+      cancelBtn.addEventListener('click', () => {
+        window.location.href = 'favorites.html';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Random Recipes</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    .recipe { margin-bottom: 20px; }
+    img { max-width: 200px; display: block; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Explore random recipes!</h1>
+  <button id="loadRandom">Get Random Recipes</button>
+  <div id="recipes">Click the button to load random recipes.</div>
+
+  <script>
+    const recipesContainer = document.getElementById('recipes');
+    const loadRandomBtn = document.getElementById('loadRandom');
+
+    function displayRecipes(recipes) {
+      if (recipes.length === 0) {
+        recipesContainer.innerHTML = '<p>No recipes found.</p>';
+        return;
+      }
+      const html = recipes.map(r => `
+        <div class="recipe">
+          <h3>${r.title}</h3>
+          <img src="${r.image || ''}" alt="${r.title}" />
+          <p>${r.instructions || ''}</p>
+          <p><strong>Ingredients:</strong> ${Array.isArray(r.ingredients) ? r.ingredients.join(', ') : JSON.parse(r.ingredients).join(', ')}</p>
+        </div>
+      `).join('');
+      recipesContainer.innerHTML = html;
+    }
+
+    async function loadRandomRecipes() {
+      recipesContainer.textContent = 'Loading random recipes...';
+      try {
+        const response = await axios.get('/api/recipes/random');
+        displayRecipes(response.data);
+      } catch (error) {
+        recipesContainer.textContent = 'Failed to load random recipes.';
+        console.error(error);
+      }
+    }
+
+    loadRandomBtn.addEventListener('click', loadRandomRecipes);
+  </script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Favorites</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    .recipe { border: 1px solid #ccc; margin-bottom: 10px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Your Favorite Recipes</h1>
+  <div id="recipes">Loading recipes...</div>
+
+  <!-- Edit form -->
+  <div id="editFormContainer" style="display:none; border:1px solid #ccc; padding:10px; margin-top:20px;">
+    <h3>Edit Recipe</h3>
+    <form id="editRecipeForm">
+      <input type="hidden" id="editId" />
+      <label>
+        Title:<br />
+        <input type="text" id="editTitle" required />
+      </label><br /><br />
+      <label>
+        Image URL:<br />
+        <input type="text" id="editImage" />
+      </label><br /><br />
+      <label>
+        Instructions:<br />
+        <textarea id="editInstructions" required></textarea>
+      </label><br /><br />
+      <label>
+        Ingredients (comma separated):<br />
+        <input type="text" id="editIngredients" required />
+      </label><br /><br />
+      <button type="submit">Save</button>
+      <button type="button" id="cancelEdit">Cancel</button>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const recipesContainer = document.getElementById('recipes');
+      const editFormContainer = document.getElementById('editFormContainer');
+      const editForm = document.getElementById('editRecipeForm');
+
+      function renderRecipes(recipes) {
+        if (!recipes.length) {
+          recipesContainer.innerHTML = '<p>No recipes found.</p>';
+          return;
+        }
+        const html = recipes.map(r => `
+          <div class="recipe" data-id="${r.id}">
+            <h3>${r.title}</h3>
+            <img src="${r.image || ''}" alt="${r.title}" width="200" />
+            <p>${r.instructions || ''}</p>
+            <p>Ingredients: ${Array.isArray(r.ingredients) ? r.ingredients.join(', ') : JSON.parse(r.ingredients).join(', ')}</p>
+            <button class="edit-btn">Edit</button>
+            <button class="delete-btn">Delete</button>
+          </div>
+        `).join('');
+        recipesContainer.innerHTML = html;
+
+        // Edit button listeners
+        document.querySelectorAll('.edit-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            const recipeDiv = button.closest('.recipe');
+            const id = recipeDiv.getAttribute('data-id');
+            const title = recipeDiv.querySelector('h3').textContent;
+            const image = recipeDiv.querySelector('img').src;
+            const instructions = recipeDiv.querySelectorAll('p')[0].textContent;
+            const ingredientsText = recipeDiv.querySelectorAll('p')[1].textContent.replace('Ingredients: ', '');
+            const ingredients = ingredientsText.split(',').map(i => i.trim());
+
+            document.getElementById('editId').value = id;
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editImage').value = image;
+            document.getElementById('editInstructions').value = instructions;
+            document.getElementById('editIngredients').value = ingredients.join(', ');
+
+            editFormContainer.style.display = 'block';
+          });
+        });
+
+        // Delete button listeners
+        document.querySelectorAll('.delete-btn').forEach(button => {
+          button.addEventListener('click', async () => {
+            const recipeDiv = button.closest('.recipe');
+            const id = recipeDiv.getAttribute('data-id');
+            if (confirm('Are you sure you want to delete this recipe?')) {
+              try {
+                await axios.delete(`/api/recipes/${id}`);
+                alert('Recipe deleted!');
+                loadRecipes();
+              } catch (err) {
+                alert('Failed to delete recipe.');
+                console.error(err);
+              }
+            }
+          });
+        });
+      }
+
+      function loadRecipes() {
+        axios.get('/api/recipes/all')
+          .then(res => renderRecipes(res.data))
+          .catch(() => recipesContainer.innerHTML = '<p>Failed to load recipes.</p>');
+      }
+
+      loadRecipes();
+
+      editForm.addEventListener('submit', async e => {
+        e.preventDefault();
+
+        const id = document.getElementById('editId').value;
+        const title = document.getElementById('editTitle').value.trim();
+        const image = document.getElementById('editImage').value.trim();
+        const instructions = document.getElementById('editInstructions').value.trim();
+        const ingredients = document.getElementById('editIngredients').value
+          .split(',')
+          .map(i => i.trim())
+          .filter(i => i.length);
+
+        try {
+          await axios.put(`/api/recipes/${id}`, { title, image, instructions, ingredients });
+          alert('Recipe updated!');
+          editFormContainer.style.display = 'none';
+          loadRecipes();
+        } catch (err) {
+          alert('Failed to update recipe.');
+          console.error(err);
+        }
+      });
+
+      document.getElementById('cancelEdit').addEventListener('click', () => {
+        editFormContainer.style.display = 'none';
+      });
+    });
+  </script>
+</body>
+</html>
