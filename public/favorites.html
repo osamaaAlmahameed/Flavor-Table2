@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Recipes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Flavor Table</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="favorites.html" class="active">My Recipes</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="controls">
+      <input type="text" id="search-input" placeholder="Search recipes...">
+      <button id="search-btn">Search</button>
+      <button id="random-btn">Show Random</button>
+    </div>
+
+    <div id="recipes-container" class="recipes-grid"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

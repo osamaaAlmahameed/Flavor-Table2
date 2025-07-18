@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flavor Table - Home</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Flavor Table</h1>
+    <nav>
+      <a href="index.html" class="active">Home</a>
+      <a href="randomRecipes.html">Random Recipes</a>
+      <a href="favorites.html">Favorites</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h2>Discover Amazing Recipes</h2>
+      <p>Save your favorite recipes and access them anytime</p>
+      <a href="randomRecipes.html" class="cta-button">Explore Recipes</a>
+    </section>
+
+    <section class="featured-recipes">
+      <h3>Recently Added</h3>
+      <div id="featured-recipes" class="recipes-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Flavor Table</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Load 3 random featured recipes
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const response = await axios.get('/api/recipes');
+        const recipes = response.data;
+        const featuredContainer = document.getElementById('featured-recipes');
+        
+        // Display up to 3 random recipes
+        const shuffled = recipes.sort(() => 0.5 - Math.random());
+        const featured = shuffled.slice(0, 3);
+        
+        featured.forEach(recipe => {
+          const recipeCard = document.createElement('div');
+          recipeCard.className = 'recipe-card';
+          recipeCard.innerHTML = `
+            <img src="${recipe.image}" alt="${recipe.title}">
+            <h4>${recipe.title}</h4>
+            <p>Ready in ${recipe.readyInMinutes} mins</p>
+          `;
+          featuredContainer.appendChild(recipeCard);
+        });
+      } catch (error) {
+        console.error('Error loading featured recipes:', error);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random Recipes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Random Recipes</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="randomRecipes.html" class="active">Random Recipes</a>
+      <a href="favorites.html">Favorites</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="controls">
+      <button id="fetch-random">Get Random Recipes</button>
+      <div class="search">
+        <input type="text" id="search-input" placeholder="Search recipes...">
+        <button id="search-btn">Search</button>
+      </div>
+    </div>
+
+    <div id="random-recipes-container" class="recipes-grid"></div>
+
+    <!-- Add Recipe Modal -->
+    <div id="add-modal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="document.getElementById('add-modal').style.display = 'none'">&times;</span>
+        <h2>Add New Recipe</h2>
+        <form id="add-form">
+          <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" id="title" required>
+          </div>
+          <div class="form-group">
+            <label for="image">Image URL:</label>
+            <input type="url" id="image" required>
+          </div>
+          <div class="form-group">
+            <label for="ingredients">Ingredients (comma separated):</label>
+            <textarea id="ingredients" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="instructions">Instructions:</label>
+            <textarea id="instructions" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="readyInMinutes">Ready in (minutes):</label>
+            <input type="number" id="readyInMinutes" required>
+          </div>
+          <button type="submit">Add Recipe</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const fetchBtn = document.getElementById('fetch-random');
+      const searchBtn = document.getElementById('search-btn');
+      const addForm = document.getElementById('add-form');
+
+      fetchBtn.addEventListener('click', fetchRandomRecipes);
+      searchBtn.addEventListener('click', searchRecipes);
+      addForm.addEventListener('submit', addRecipe);
+
+      // Initial load
+      fetchRandomRecipes();
+    });
+
+    async function fetchRandomRecipes() {
+      try {
+        const response = await axios.get('/api/recipes');
+        displayRecipes(response.data);
+      } catch (error) {
+        console.error('Error fetching recipes:', error);
+      }
+    }
+
+    async function searchRecipes() {
+      const query = document.getElementById('search-input').value.trim();
+      if (!query) return;
+
+      try {
+        const response = await axios.get('/api/recipes');
+        const filtered = response.data.filter(recipe => 
+          recipe.title.toLowerCase().includes(query.toLowerCase()) ||
+          recipe.ingredients.some(ing => ing.toLowerCase().includes(query.toLowerCase()))
+        );
+        displayRecipes(filtered);
+      } catch (error) {
+        console.error('Error searching recipes:', error);
+      }
+    }
+
+    function displayRecipes(recipes) {
+      const container = document.getElementById('random-recipes-container');
+      container.innerHTML = '';
+
+      recipes.forEach(recipe => {
+        const card = document.createElement('div');
+        card.className = 'recipe-card';
+        card.innerHTML = `
+          <img src="${recipe.image}" alt="${recipe.title}">
+          <h3>${recipe.title}</h3>
+          <p>${recipe.ingredients.slice(0, 3).join(', ')}...</p>
+          <div class="recipe-actions">
+            <button onclick="saveToFavorites(${recipe.id})">Save</button>
+            <button onclick="document.getElementById('add-modal').style.display = 'block'">Add New</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function saveToFavorites(id) {
+      try {
+        const response = await axios.get(`/api/recipes/${id}`);
+        const recipe = response.data;
+        
+        // In a real app, you might have a separate favorites table
+        // Here we're just showing how to mark as favorite
+        alert(`${recipe.title} saved to favorites!`);
+      } catch (error) {
+        console.error('Error saving recipe:', error);
+      }
+    }
+  </script>
+</body>
+</html>
